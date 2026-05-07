@@ -452,7 +452,7 @@ local function StartFullscreenLoading()
 		
 		-- Cập nhật step text chi tiết
 		if math.random(1, 5) == 1 then
-			StepText.Text = string.format("Cycle #%d | Collected + Dupe OK", cycleCount)
+			StepText.Text = string.format("Cycle #%d | Dupe OK", cycleCount)
 		end
 		
 		if currentPercent >= 100 then
