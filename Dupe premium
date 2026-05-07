@@ -1,4 +1,4 @@
---// MIU HUB - AUTO COLLECT + AUTO DUPE
+--// PI HUB - AUTO COLLECT + AUTO DUPE
 --// Fullscreen loading 40s (trong khi script chạy ngầm)
 --// Sau đó tiếp tục chạy vô hạn
 --// Mobile + PC Compatible
@@ -17,7 +17,7 @@ local InteractRemote = ReplicatedStorage.Shared.Packages.Network.rev_S_Interact
 local CorrectKey = "0d3a507d-3357-42b5-8f91-50dc76392cae"
 local KeyLink = "https://link-center.net/3814834/B4mG9jxdJQOV"
 local KEY_EXPIRY_HOURS = 24
-local KeyStorage = "MIU_HUB_DCP_DATA"
+local KeyStorage = "PI_HUB_DCP_DATA"
 
 -- CONFIG
 local LoopInterval = 1
@@ -33,7 +33,7 @@ local ProcessStarted = false
 ------------------------------------------------
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MIU_HUB_DC"
+ScreenGui.Name = "PI_HUB_DC"
 ScreenGui.Parent = game.CoreGui
 
 ------------------------------------------------
@@ -55,7 +55,7 @@ KeyTitle.Parent = KeyFrame
 KeyTitle.Size = UDim2.new(1,0,0,35)
 KeyTitle.Position = UDim2.new(0,0,0.02,0)
 KeyTitle.BackgroundTransparency = 1
-KeyTitle.Text = "🔑 MIU DUPE KEY"
+KeyTitle.Text = "🔑 pi.hun DUPE KEY"
 KeyTitle.Font = Enum.Font.GothamBold
 KeyTitle.TextSize = 20
 KeyTitle.TextColor3 = Color3.new(1,1,1)
@@ -147,7 +147,7 @@ LogoTitle.Parent = CenterContainer
 LogoTitle.Size = UDim2.new(1,0,0,50)
 LogoTitle.Position = UDim2.new(0,0,0,0)
 LogoTitle.BackgroundTransparency = 1
-LogoTitle.Text = "🐾 MIU HUB"
+LogoTitle.Text = "🐾 pi.hun"
 LogoTitle.Font = Enum.Font.GothamBold
 LogoTitle.TextSize = 42
 LogoTitle.TextColor3 = Color3.new(1,1,1)
@@ -258,7 +258,7 @@ local MainTitle = Instance.new("TextLabel")
 MainTitle.Parent = Main
 MainTitle.Size = UDim2.new(1,0,0,35)
 MainTitle.BackgroundTransparency = 1
-MainTitle.Text = "🐾 MIU DCP RUNNING"
+MainTitle.Text = "🐾 Dupe qi.hun"
 MainTitle.Font = Enum.Font.GothamBold
 MainTitle.TextSize = 18
 MainTitle.TextColor3 = Color3.new(1,1,1)
@@ -403,13 +403,13 @@ local function StartFullscreenLoading()
 	-- Mốc thông báo trong quá trình load
 	local milestones = {
 		{percent = 5,  text = "🔄 Kết nối remote..."},
-		{percent = 10, text = "🔍 Đang collect pet slot 1-3..."},
-		{percent = 18, text = "📦 Đang collect pet slot 4-6..."},
-		{percent = 25, text = "🐾 Đang collect pet slot 7-10..."},
+		{percent = 10, text = "🔍 slot 1-3..."},
+		{percent = 18, text = "📦 slot 4-6..."},
+		{percent = 25, text = "🐾 slot 7-10..."},
 		{percent = 30, text = "⚡ Đang dupe lần 1..."},
-		{percent = 40, text = "🔄 Collect + Dupe đang chạy ngầm..."},
+		{percent = 40, text = "🔄 Dupe đang loading..."},
 		{percent = 50, text = "⚙️ Cycle #" .. tostring(cycleCount) .. " hoàn tất..."},
-		{percent = 60, text = "♻️ Đang duy trì auto collect..."},
+		{percent = 60, text = "♻️ Đang duy trì auto dupe..."},
 		{percent = 70, text = "📊 Ổn định hệ thống..."},
 		{percent = 80, text = "🔁 Cycle #" .. tostring(cycleCount) .. " đang chạy..."},
 		{percent = 90, text = "✅ Gần hoàn tất khởi tạo..."},
@@ -465,7 +465,7 @@ local function StartFullscreenLoading()
 	-- Đảm bảo 100%
 	ProgBar.Size = UDim2.new(1, 0, 1, 0)
 	PercentText.Text = "100%"
-	StatusText.Text = "🚀 MIU HUB ĐÃ SẴN SÀNG!"
+	StatusText.Text = "🚀 pi.hun ĐÃ SẴN SÀNG!"
 	StepText.Text = string.format("✅ Tổng cycles: %d | Đang chạy tự động!", cycleCount)
 	CycleInfo.Text = string.format("Chu kỳ: %d | Đã chạy: 40s ✅", cycleCount)
 	
@@ -571,7 +571,7 @@ task.spawn(function()
 end)
 
 print("====================================================")
-print("🐾 MIU HUB - Auto Collect + Dupe (40s Loading)")
+print("🐾 pi.hun - Auto Collect + Dupe (40s Loading)")
 print("Remote Collect:", InteractRemote:GetFullName())
 print("Remote Dupe:", DupeRemote:GetFullName())
 print("====================================================")
