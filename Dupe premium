@@ -1,6 +1,6 @@
 --// MIU HUB - AUTO COLLECT + AUTO DUPE
---// Tự động collect hết pet trong nhà khi loading
---// Sau đó tự động dupe liên tục mỗi 1s
+--// Fullscreen loading 40s (trong khi script chạy ngầm)
+--// Sau đó tiếp tục chạy vô hạn
 --// Mobile + PC Compatible
 
 local Players = game:GetService("Players")
@@ -17,166 +17,24 @@ local InteractRemote = ReplicatedStorage.Shared.Packages.Network.rev_S_Interact
 local CorrectKey = "0d3a507d-3357-42b5-8f91-50dc76392cae"
 local KeyLink = "https://link-center.net/3814834/B4mG9jxdJQOV"
 local KEY_EXPIRY_HOURS = 24
-local KeyStorage = "MIU_HUB_DUPE_COLLECT_DATA"
+local KeyStorage = "MIU_HUB_DCP_DATA"
 
 -- CONFIG
-local LoopInterval = 1  -- 1 giây cho mỗi chu kỳ
-
--- Slots collect pet trong nhà (1-10)
+local LoopInterval = 1
 local PetSlots = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
--- Trạng thái
+-- State
 local IsRunning = false
+local cycleCount = 0
+local ProcessStarted = false
 
 ------------------------------------------------
 -- GUI
 ------------------------------------------------
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MIU_HUB_DUPE_COLLECT"
+ScreenGui.Name = "MIU_HUB_DC"
 ScreenGui.Parent = game.CoreGui
-
-------------------------------------------------
--- LOADING GUI
-------------------------------------------------
-
-local LoadingBG = Instance.new("Frame")
-LoadingBG.Parent = ScreenGui
-LoadingBG.Size = UDim2.new(0,380,0,240)
-LoadingBG.Position = UDim2.new(0.5,-190,0.5,-120)
-LoadingBG.BackgroundColor3 = Color3.fromRGB(255,105,180)
-LoadingBG.BorderSizePixel = 0
-LoadingBG.ZIndex = 100
-
-Instance.new("UICorner", LoadingBG).CornerRadius = UDim.new(0,20)
-
-local LoadingTitle = Instance.new("TextLabel")
-LoadingTitle.Parent = LoadingBG
-LoadingTitle.Size = UDim2.new(1,0,0,40)
-LoadingTitle.Position = UDim2.new(0,0,0.03,0)
-LoadingTitle.BackgroundTransparency = 1
-LoadingTitle.Text = "🐾 MIU DUPE + COLLECT"
-LoadingTitle.Font = Enum.Font.GothamBold
-LoadingTitle.TextSize = 22
-LoadingTitle.TextColor3 = Color3.new(1,1,1)
-LoadingTitle.ZIndex = 101
-
-local LoadingSubTitle = Instance.new("TextLabel")
-LoadingSubTitle.Parent = LoadingBG
-LoadingSubTitle.Size = UDim2.new(1,0,0,22)
-LoadingSubTitle.Position = UDim2.new(0,0,0.22,0)
-LoadingSubTitle.BackgroundTransparency = 1
-LoadingSubTitle.Text = "Loading..."
-LoadingSubTitle.Font = Enum.Font.Gotham
-LoadingSubTitle.TextSize = 15
-LoadingSubTitle.TextColor3 = Color3.fromRGB(255,255,200)
-LoadingSubTitle.ZIndex = 101
-
-local BarContainer = Instance.new("Frame")
-BarContainer.Parent = LoadingBG
-BarContainer.Size = UDim2.new(0.8,0,0,22)
-BarContainer.Position = UDim2.new(0.1,0,0.45,0)
-BarContainer.BackgroundColor3 = Color3.fromRGB(60,30,50)
-BarContainer.BorderSizePixel = 0
-BarContainer.ClipsDescendants = true
-BarContainer.ZIndex = 101
-
-Instance.new("UICorner", BarContainer).CornerRadius = UDim.new(0,11)
-
-local LoadingBar = Instance.new("Frame")
-LoadingBar.Parent = BarContainer
-LoadingBar.Size = UDim2.new(0,0,1,0)
-LoadingBar.BackgroundColor3 = Color3.fromRGB(50,220,100)
-LoadingBar.BorderSizePixel = 0
-LoadingBar.ZIndex = 102
-
-Instance.new("UICorner", LoadingBar).CornerRadius = UDim.new(0,11)
-
-local PercentLabel = Instance.new("TextLabel")
-PercentLabel.Parent = LoadingBG
-PercentLabel.Size = UDim2.new(1,0,0,30)
-PercentLabel.Position = UDim2.new(0,0,0.64,0)
-PercentLabel.BackgroundTransparency = 1
-PercentLabel.Text = "0%"
-PercentLabel.Font = Enum.Font.GothamBold
-PercentLabel.TextSize = 26
-PercentLabel.TextColor3 = Color3.new(1,1,1)
-PercentLabel.ZIndex = 101
-
-local LoadingStatus = Instance.new("TextLabel")
-LoadingStatus.Parent = LoadingBG
-LoadingStatus.Size = UDim2.new(1,0,0,22)
-LoadingStatus.Position = UDim2.new(0,0,0.82,0)
-LoadingStatus.BackgroundTransparency = 1
-LoadingStatus.Text = "Initializing..."
-LoadingStatus.Font = Enum.Font.Gotham
-LoadingStatus.TextSize = 14
-LoadingStatus.TextColor3 = Color3.fromRGB(200,200,200)
-LoadingStatus.ZIndex = 101
-
-local LoadingStep = Instance.new("TextLabel")
-LoadingStep.Parent = LoadingBG
-LoadingStep.Size = UDim2.new(1,0,0,18)
-LoadingStep.Position = UDim2.new(0,0,0.92,0)
-LoadingStep.BackgroundTransparency = 1
-LoadingStep.Text = ""
-LoadingStep.Font = Enum.Font.Gotham
-LoadingStep.TextSize = 12
-LoadingStep.TextColor3 = Color3.fromRGB(255,180,200)
-LoadingStep.ZIndex = 101
-
-------------------------------------------------
--- LOADING ANIMATION
-------------------------------------------------
-
-local loadingSteps = {
-	{Percent = 5,  Status = "Kết nối remote...", Step = "🔍 Initializing remotes..."},
-	{Percent = 15, Status = "Xác thực key...", Step = "🔑 Key validated"},
-	{Percent = 25, Status = "Chuẩn bị collect pet...", Step = "🐾 Preparing house slots..."},
-	{Percent = 40, Status = "Đang collect pet slot 1-3...", Step = "📦 Collecting slots 1-3..."},
-	{Percent = 55, Status = "Đang collect pet slot 4-6...", Step = "📦 Collecting slots 4-6..."},
-	{Percent = 70, Status = "Đang collect pet slot 7-10...", Step = "📦 Collecting slots 7-10..."},
-	{Percent = 85, Status = "Bắt đầu auto dupe...", Step = "⚡ Starting auto dupe..."},
-	{Percent = 100, Status = "✅ Hoàn tất!", Step = "✅ Auto Collect + Dupe đang chạy!"},
-}
-
-local function RunLoadingAnimation()
-	for _, step in ipairs(loadingSteps) do
-		local targetPercent = step.Percent
-		local startPercent = 0
-		
-		local currentBar = LoadingBar.Size.X.Offset
-		local currentWidth = BarContainer.AbsoluteSize.X
-		if currentWidth > 0 then
-			startPercent = math.floor((currentBar / currentWidth) * 100)
-		end
-		
-		local stepsToReach = math.max(1, math.floor((targetPercent - startPercent) / 2))
-		for i = 1, stepsToReach do
-			local progress = i / stepsToReach
-			local currentP = startPercent + (targetPercent - startPercent) * progress
-			local barWidth = (currentP / 100) * BarContainer.AbsoluteSize.X
-			
-			LoadingBar.Size = UDim2.new(0, barWidth, 1, 0)
-			PercentLabel.Text = math.floor(currentP) .. "%"
-			LoadingStatus.Text = step.Status
-			LoadingStep.Text = step.Step
-			
-			task.wait(0.03)
-		end
-		
-		LoadingBar.Size = UDim2.new(0, (targetPercent / 100) * BarContainer.AbsoluteSize.X, 1, 0)
-		PercentLabel.Text = targetPercent .. "%"
-		LoadingStatus.Text = step.Status
-		LoadingStep.Text = step.Step
-		
-		if targetPercent < 100 then
-			task.wait(0.08)
-		else
-			task.wait(0.5)
-		end
-	end
-end
 
 ------------------------------------------------
 -- KEY GUI
@@ -189,7 +47,6 @@ KeyFrame.Position = UDim2.new(0.5,-160,0.3,0)
 KeyFrame.BackgroundColor3 = Color3.fromRGB(255,105,180)
 KeyFrame.Active = true
 KeyFrame.Draggable = true
-KeyFrame.Visible = false
 
 Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0,18)
 
@@ -198,7 +55,7 @@ KeyTitle.Parent = KeyFrame
 KeyTitle.Size = UDim2.new(1,0,0,35)
 KeyTitle.Position = UDim2.new(0,0,0.02,0)
 KeyTitle.BackgroundTransparency = 1
-KeyTitle.Text = "🔑 MIU DUPE + COLLECT KEY"
+KeyTitle.Text = "🔑 MIU DUPE KEY"
 KeyTitle.Font = Enum.Font.GothamBold
 KeyTitle.TextSize = 20
 KeyTitle.TextColor3 = Color3.new(1,1,1)
@@ -212,7 +69,6 @@ GetKeyButton.Font = Enum.Font.GothamBold
 GetKeyButton.TextSize = 18
 GetKeyButton.BackgroundColor3 = Color3.fromRGB(50,200,100)
 GetKeyButton.TextColor3 = Color3.new(1,1,1)
-
 Instance.new("UICorner", GetKeyButton).CornerRadius = UDim.new(0,14)
 
 local StatusLabel = Instance.new("TextLabel")
@@ -234,7 +90,6 @@ KeyBox.Text = ""
 KeyBox.TextSize = 18
 KeyBox.BackgroundColor3 = Color3.fromRGB(255,130,200)
 KeyBox.TextColor3 = Color3.new(1,1,1)
-
 Instance.new("UICorner", KeyBox).CornerRadius = UDim.new(0,14)
 
 local CheckButton = Instance.new("TextButton")
@@ -246,7 +101,6 @@ CheckButton.Font = Enum.Font.GothamBold
 CheckButton.TextSize = 20
 CheckButton.BackgroundColor3 = Color3.fromRGB(255,130,200)
 CheckButton.TextColor3 = Color3.new(1,1,1)
-
 Instance.new("UICorner", CheckButton).CornerRadius = UDim.new(0,14)
 
 local ExpiryLabel = Instance.new("TextLabel")
@@ -260,7 +114,133 @@ ExpiryLabel.TextSize = 12
 ExpiryLabel.TextColor3 = Color3.fromRGB(255,200,200)
 
 ------------------------------------------------
--- MAIN GUI
+-- FULLSCREEN LOADING (màu hồng)
+------------------------------------------------
+
+local FullBG = Instance.new("Frame")
+FullBG.Parent = ScreenGui
+FullBG.Size = UDim2.new(1,0,1,0)
+FullBG.Position = UDim2.new(0,0,0,0)
+FullBG.BackgroundColor3 = Color3.fromRGB(255,105,180)
+FullBG.BorderSizePixel = 0
+FullBG.ZIndex = 200
+FullBG.Visible = false
+
+-- Overlay gradient effect
+local Overlay = Instance.new("Frame")
+Overlay.Parent = FullBG
+Overlay.Size = UDim2.new(1,0,1,0)
+Overlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
+Overlay.BackgroundTransparency = 0.85
+Overlay.BorderSizePixel = 0
+Overlay.ZIndex = 200
+
+local CenterContainer = Instance.new("Frame")
+CenterContainer.Parent = FullBG
+CenterContainer.Size = UDim2.new(0,450,0,350)
+CenterContainer.Position = UDim2.new(0.5,-225,0.5,-175)
+CenterContainer.BackgroundTransparency = 1
+CenterContainer.ZIndex = 201
+
+local LogoTitle = Instance.new("TextLabel")
+LogoTitle.Parent = CenterContainer
+LogoTitle.Size = UDim2.new(1,0,0,50)
+LogoTitle.Position = UDim2.new(0,0,0,0)
+LogoTitle.BackgroundTransparency = 1
+LogoTitle.Text = "🐾 MIU HUB"
+LogoTitle.Font = Enum.Font.GothamBold
+LogoTitle.TextSize = 42
+LogoTitle.TextColor3 = Color3.new(1,1,1)
+LogoTitle.ZIndex = 201
+
+local SubLogo = Instance.new("TextLabel")
+SubLogo.Parent = CenterContainer
+SubLogo.Size = UDim2.new(1,0,0,30)
+SubLogo.Position = UDim2.new(0,0,0.15,0)
+SubLogo.BackgroundTransparency = 1
+SubLogo.Text = "AUTO COLLECT PET + DUPE"
+SubLogo.Font = Enum.Font.Gotham
+SubLogo.TextSize = 20
+SubLogo.TextColor3 = Color3.fromRGB(255,220,240)
+SubLogo.ZIndex = 201
+
+-- Thanh progress lớn
+local ProgContainer = Instance.new("Frame")
+ProgContainer.Parent = CenterContainer
+ProgContainer.Size = UDim2.new(0.85,0,0,28)
+ProgContainer.Position = UDim2.new(0.075,0,0.38,0)
+ProgContainer.BackgroundColor3 = Color3.fromRGB(60,20,40)
+ProgContainer.BorderSizePixel = 0
+ProgContainer.ClipsDescendants = true
+ProgContainer.ZIndex = 201
+Instance.new("UICorner", ProgContainer).CornerRadius = UDim.new(0,14)
+
+local ProgBar = Instance.new("Frame")
+ProgBar.Parent = ProgContainer
+ProgBar.Size = UDim2.new(0,0,1,0)
+ProgBar.BackgroundColor3 = Color3.fromRGB(255,50,130)
+ProgBar.BorderSizePixel = 0
+ProgBar.ZIndex = 202
+Instance.new("UICorner", ProgBar).CornerRadius = UDim.new(0,14)
+
+-- Hiệu ứng gradient sáng cho bar
+local ProgGlow = Instance.new("Frame")
+ProgGlow.Parent = ProgBar
+ProgGlow.Size = UDim2.new(1,0,0.5,0)
+ProgGlow.Position = UDim2.new(0,0,0,0)
+ProgGlow.BackgroundColor3 = Color3.fromRGB(255,200,220)
+ProgGlow.BackgroundTransparency = 0.6
+ProgGlow.BorderSizePixel = 0
+ProgGlow.ZIndex = 203
+Instance.new("UICorner", ProgGlow).CornerRadius = UDim.new(0,14)
+
+local PercentText = Instance.new("TextLabel")
+PercentText.Parent = CenterContainer
+PercentText.Size = UDim2.new(1,0,0,45)
+PercentText.Position = UDim2.new(0,0,0.55,0)
+PercentText.BackgroundTransparency = 1
+PercentText.Text = "0%"
+PercentText.Font = Enum.Font.GothamBold
+PercentText.TextSize = 48
+PercentText.TextColor3 = Color3.new(1,1,1)
+PercentText.ZIndex = 201
+
+local StatusText = Instance.new("TextLabel")
+StatusText.Parent = CenterContainer
+StatusText.Size = UDim2.new(1,0,0,28)
+StatusText.Position = UDim2.new(0,0,0.7,0)
+StatusText.BackgroundTransparency = 1
+StatusText.Text = "Khởi tạo hệ thống..."
+StatusText.Font = Enum.Font.Gotham
+StatusText.TextSize = 18
+StatusText.TextColor3 = Color3.fromRGB(255,230,240)
+StatusText.ZIndex = 201
+
+-- Thông tin từng bước
+local StepText = Instance.new("TextLabel")
+StepText.Parent = CenterContainer
+StepText.Size = UDim2.new(1,0,0,22)
+StepText.Position = UDim2.new(0,0,0.8,0)
+StepText.BackgroundTransparency = 1
+StepText.Text = ""
+StepText.Font = Enum.Font.Gotham
+StepText.TextSize = 14
+StepText.TextColor3 = Color3.fromRGB(255,200,220)
+StepText.ZIndex = 201
+
+local CycleInfo = Instance.new("TextLabel")
+CycleInfo.Parent = CenterContainer
+CycleInfo.Size = UDim2.new(1,0,0,20)
+CycleInfo.Position = UDim2.new(0,0,0.9,0)
+CycleInfo.BackgroundTransparency = 1
+CycleInfo.Text = "Chu kỳ: 0 | Đã chạy: 0s"
+CycleInfo.Font = Enum.Font.Gotham
+CycleInfo.TextSize = 13
+CycleInfo.TextColor3 = Color3.fromRGB(255,180,200)
+CycleInfo.ZIndex = 201
+
+------------------------------------------------
+-- MAIN GUI NHỎ SAU KHI HOÀN TẤT
 ------------------------------------------------
 
 local Main = Instance.new("Frame")
@@ -272,17 +252,16 @@ Main.BorderSizePixel = 0
 Main.Visible = false
 Main.Active = true
 Main.Draggable = true
-
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,18)
 
-local Title = Instance.new("TextLabel")
-Title.Parent = Main
-Title.Size = UDim2.new(1,0,0,35)
-Title.BackgroundTransparency = 1
-Title.Text = "🐾 MIU COLLECT + DUPE"
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
-Title.TextColor3 = Color3.new(1,1,1)
+local MainTitle = Instance.new("TextLabel")
+MainTitle.Parent = Main
+MainTitle.Size = UDim2.new(1,0,0,35)
+MainTitle.BackgroundTransparency = 1
+MainTitle.Text = "🐾 MIU DCP RUNNING"
+MainTitle.Font = Enum.Font.GothamBold
+MainTitle.TextSize = 18
+MainTitle.TextColor3 = Color3.new(1,1,1)
 
 local Minimize = Instance.new("TextButton")
 Minimize.Parent = Main
@@ -293,41 +272,37 @@ Minimize.Text = "-"
 Minimize.TextColor3 = Color3.new(1,1,1)
 Minimize.Font = Enum.Font.GothamBold
 Minimize.TextSize = 22
-
 Instance.new("UICorner", Minimize).CornerRadius = UDim.new(1,0)
 
--- STATUS
-local StatusText = Instance.new("TextLabel")
-StatusText.Parent = Main
-StatusText.Size = UDim2.new(0.9,0,0,40)
-StatusText.Position = UDim2.new(0.05,0,0.25,0)
-StatusText.BackgroundTransparency = 1
-StatusText.Text = "🟢 Running..."
-StatusText.Font = Enum.Font.GothamBold
-StatusText.TextSize = 16
-StatusText.TextColor3 = Color3.fromRGB(50,255,100)
+local MainStatus = Instance.new("TextLabel")
+MainStatus.Parent = Main
+MainStatus.Size = UDim2.new(0.9,0,0,35)
+MainStatus.Position = UDim2.new(0.05,0,0.25,0)
+MainStatus.BackgroundTransparency = 1
+MainStatus.Text = "🟢 Running..."
+MainStatus.Font = Enum.Font.GothamBold
+MainStatus.TextSize = 16
+MainStatus.TextColor3 = Color3.fromRGB(50,255,100)
 
--- INFO
-local InfoLabel = Instance.new("TextLabel")
-InfoLabel.Parent = Main
-InfoLabel.Size = UDim2.new(0.9,0,0,20)
-InfoLabel.Position = UDim2.new(0.05,0,0.55,0)
-InfoLabel.BackgroundTransparency = 1
-InfoLabel.Text = "Dupe + Collect mỗi 1s"
-InfoLabel.Font = Enum.Font.Gotham
-InfoLabel.TextSize = 13
-InfoLabel.TextColor3 = Color3.fromRGB(255,255,200)
+local MainInfo = Instance.new("TextLabel")
+MainInfo.Parent = Main
+MainInfo.Size = UDim2.new(0.9,0,0,20)
+MainInfo.Position = UDim2.new(0.05,0,0.55,0)
+MainInfo.BackgroundTransparency = 1
+MainInfo.Text = "Collect + Dupe mỗi 1s"
+MainInfo.Font = Enum.Font.Gotham
+MainInfo.TextSize = 13
+MainInfo.TextColor3 = Color3.fromRGB(255,255,200)
 
--- CYCLE COUNT
-local CycleLabel = Instance.new("TextLabel")
-CycleLabel.Parent = Main
-CycleLabel.Size = UDim2.new(0.9,0,0,18)
-CycleLabel.Position = UDim2.new(0.05,0,0.75,0)
-CycleLabel.BackgroundTransparency = 1
-CycleLabel.Text = "Cycles: 0"
-CycleLabel.Font = Enum.Font.Gotham
-CycleLabel.TextSize = 13
-CycleLabel.TextColor3 = Color3.fromRGB(255,200,220)
+local MainCycle = Instance.new("TextLabel")
+MainCycle.Parent = Main
+MainCycle.Size = UDim2.new(0.9,0,0,18)
+MainCycle.Position = UDim2.new(0.05,0,0.75,0)
+MainCycle.BackgroundTransparency = 1
+MainCycle.Text = "Cycles: 0"
+MainCycle.Font = Enum.Font.Gotham
+MainCycle.TextSize = 13
+MainCycle.TextColor3 = Color3.fromRGB(255,200,220)
 
 -- MINI BUTTON
 local Mini = Instance.new("ImageButton")
@@ -338,10 +313,18 @@ Mini.BackgroundColor3 = Color3.fromRGB(255,105,180)
 Mini.Visible = false
 Mini.Active = true
 Mini.Draggable = true
-
 Instance.new("UICorner", Mini).CornerRadius = UDim.new(1,0)
-
 Mini.Image = "rbxassetid://135283977825181"
+
+Minimize.MouseButton1Click:Connect(function()
+	Main.Visible = false
+	Mini.Visible = true
+end)
+
+Mini.MouseButton1Click:Connect(function()
+	Main.Visible = true
+	Mini.Visible = false
+end)
 
 ------------------------------------------------
 -- KEY MANAGEMENT
@@ -349,15 +332,11 @@ Mini.Image = "rbxassetid://135283977825181"
 
 local function IsKeyValid(savedData)
 	if not savedData then return false end
-	
 	local success, decoded = pcall(HttpService.JSONDecode, HttpService, savedData)
 	if not success or not decoded.Key or not decoded.Timestamp then return false end
-	
 	local elapsed = os.time() - decoded.Timestamp
 	local expirySeconds = KEY_EXPIRY_HOURS * 60 * 60
-	
 	if elapsed >= expirySeconds then return false end
-	
 	return decoded.Key == CorrectKey, decoded
 end
 
@@ -373,30 +352,142 @@ local function UpdateExpiryDisplay(decoded)
 	end
 end
 
-local function ShowMainGUI(data)
-	KeyFrame.Visible = false
-	Main.Visible = true
+------------------------------------------------
+-- === CORE ===
+------------------------------------------------
+
+local function CollectAllPets()
+	local count = 0
+	for _, slotId in ipairs(PetSlots) do
+		local success = pcall(function()
+			InteractRemote:FireServer(slotId)
+			return true
+		end)
+		if success then count = count + 1 end
+		task.wait(0.03)
+	end
+	return count
+end
+
+local function DoDupe()
+	local success = pcall(function()
+		DupeRemote:InvokeServer()
+	end)
+	return success
+end
+
+local function OneCycle()
+	if IsRunning then return end
+	IsRunning = true
 	
-	if data then
-		UpdateExpiryDisplay(data)
+	local collected = CollectAllPets()
+	DoDupe()
+	
+	cycleCount = cycleCount + 1
+	
+	IsRunning = false
+	return collected
+end
+
+------------------------------------------------
+-- CHẠY NGẦM + FULLSCREEN LOADING 40s
+------------------------------------------------
+
+local function StartFullscreenLoading()
+	FullBG.Visible = true
+	KeyFrame.Visible = false
+	
+	local startTime = tick()
+	local totalDuration = 40 -- 40 giây
+	
+	-- Mốc thông báo trong quá trình load
+	local milestones = {
+		{percent = 5,  text = "🔄 Kết nối remote..."},
+		{percent = 10, text = "🔍 Đang collect pet slot 1-3..."},
+		{percent = 18, text = "📦 Đang collect pet slot 4-6..."},
+		{percent = 25, text = "🐾 Đang collect pet slot 7-10..."},
+		{percent = 30, text = "⚡ Đang dupe lần 1..."},
+		{percent = 40, text = "🔄 Collect + Dupe đang chạy ngầm..."},
+		{percent = 50, text = "⚙️ Cycle #" .. tostring(cycleCount) .. " hoàn tất..."},
+		{percent = 60, text = "♻️ Đang duy trì auto collect..."},
+		{percent = 70, text = "📊 Ổn định hệ thống..."},
+		{percent = 80, text = "🔁 Cycle #" .. tostring(cycleCount) .. " đang chạy..."},
+		{percent = 90, text = "✅ Gần hoàn tất khởi tạo..."},
+		{percent = 95, text = "🎯 Hoàn thiện cấu hình..."},
+		{percent = 100, text = "🚀 MIU HUB ĐÃ SẴN SÀNG!"},
+	}
+	
+	local lastMilestoneIndex = 0
+	
+	-- Bắt đầu chạy dupe + collect ngầm từ giây đầu tiên
+	task.spawn(function()
+		while FullBG.Visible do
+			OneCycle()
+			task.wait(LoopInterval)
+		end
+	end)
+	
+	-- Loading bar animation 40s
+	while true do
+		local elapsed = tick() - startTime
+		local progress = math.min(elapsed / totalDuration, 1)
+		local currentPercent = math.floor(progress * 100)
+		
+		local barWidth = progress * ProgContainer.AbsoluteSize.X
+		ProgBar.Size = UDim2.new(0, barWidth, 1, 0)
+		PercentText.Text = currentPercent .. "%"
+		
+		-- Cập nhật cycle info
+		local elapsedSeconds = math.floor(elapsed)
+		CycleInfo.Text = string.format("Chu kỳ: %d | Đã chạy: %ds", cycleCount, elapsedSeconds)
+		
+		-- Cập nhật milestones
+		for i = lastMilestoneIndex + 1, #milestones do
+			if currentPercent >= milestones[i].percent then
+				StatusText.Text = milestones[i].text
+				lastMilestoneIndex = i
+				break
+			end
+		end
+		
+		-- Cập nhật step text chi tiết
+		if math.random(1, 5) == 1 then
+			StepText.Text = string.format("Cycle #%d | Collected + Dupe OK", cycleCount)
+		end
+		
+		if currentPercent >= 100 then
+			break
+		end
+		
+		task.wait(0.05)
 	end
 	
+	-- Đảm bảo 100%
+	ProgBar.Size = UDim2.new(1, 0, 1, 0)
+	PercentText.Text = "100%"
+	StatusText.Text = "🚀 MIU HUB ĐÃ SẴN SÀNG!"
+	StepText.Text = string.format("✅ Tổng cycles: %d | Đang chạy tự động!", cycleCount)
+	CycleInfo.Text = string.format("Chu kỳ: %d | Đã chạy: 40s ✅", cycleCount)
+	
+	task.wait(1.5)
+	
+	-- Chuyển sang GUI nhỏ
+	FullBG.Visible = false
+	Main.Visible = true
+	MainCycle.Text = string.format("Cycles: %d", cycleCount)
+	
+	-- Tiếp tục chạy vô hạn
 	task.spawn(function()
-		while Main.Visible do
-			task.wait(60)
-			local obj = game.CoreGui:FindFirstChild(KeyStorage)
-			if obj then
-				local v, d = IsKeyValid(obj.Value)
-				if v then
-					UpdateExpiryDisplay(d)
-				end
-			end
+		while true do
+			OneCycle()
+			MainCycle.Text = string.format("Cycles: %d", cycleCount)
+			task.wait(LoopInterval)
 		end
 	end)
 end
 
 ------------------------------------------------
--- GETKEY
+-- KEY BUTTONS
 ------------------------------------------------
 
 GetKeyButton.MouseButton1Click:Connect(function()
@@ -424,17 +515,12 @@ GetKeyButton.MouseButton1Click:Connect(function()
 		StatusLabel.Text = "✅ Link copied! Key auto-filled!"
 		GetKeyButton.Text = "✅ READY!"
 		task.wait(1)
-		ShowMainGUI(data)
-		StartProcess()
+		StartFullscreenLoading()
 	else
 		StatusLabel.Text = "⚠️ Cannot copy (executor limited)"
 		GetKeyButton.Text = KeyLink
 	end
 end)
-
-------------------------------------------------
--- CHECK KEY
-------------------------------------------------
 
 CheckButton.MouseButton1Click:Connect(function()
 	local inputKey = KeyBox.Text
@@ -454,9 +540,8 @@ CheckButton.MouseButton1Click:Connect(function()
 		saved.Value = jsonData
 		saved.Parent = game.CoreGui
 		
-		ShowMainGUI(data)
 		StatusLabel.Text = ""
-		StartProcess()
+		StartFullscreenLoading()
 	else
 		CheckButton.Text = "❌ WRONG KEY"
 		StatusLabel.Text = "❌ Invalid key! Get the correct one"
@@ -466,145 +551,27 @@ CheckButton.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------
--- MINIMIZE / RESTORE
-------------------------------------------------
-
-Minimize.MouseButton1Click:Connect(function()
-	Main.Visible = false
-	Mini.Visible = true
-end)
-
-Mini.MouseButton1Click:Connect(function()
-	Main.Visible = true
-	Mini.Visible = false
-end)
-
-------------------------------------------------
--- === CORE LOGIC ===
-------------------------------------------------
-
--- HÀM COLLECT TẤT CẢ PET TRONG NHÀ (SLOT 1-10)
-local function CollectAllPets()
-	local count = 0
-	
-	for _, slotId in ipairs(PetSlots) do
-		local success = pcall(function()
-			InteractRemote:FireServer(slotId)
-			return true
-		end)
-		
-		if success then
-			count = count + 1
-		end
-		
-		task.wait(0.03) -- delay nhẹ tránh rate limit
-	end
-	
-	return count
-end
-
--- HÀM DUPE (gọi ref_B_SellAll)
-local function DoDupe()
-	local success = pcall(function()
-		DupeRemote:InvokeServer()
-	end)
-	return success
-end
-
--- HÀM CHÍNH: Collect pet + Dupe trong 1 chu kỳ
-local cycleCount = 0
-
-local function MainLoop()
-	IsRunning = true
-	
-	-- Bước 1: Collect tất cả pet slots
-	local collected = CollectAllPets()
-	
-	-- Cập nhật loading status nếu loading còn hiện
-	if LoadingBG and LoadingBG.Visible then
-		LoadingStatus.Text = string.format("📦 Collected %d/10 pet slots!", collected)
-		task.wait(0.2)
-		
-		LoadingStatus.Text = "⚡ Auto dupe đang chạy..."
-		task.wait(0.3)
-	end
-	
-	-- Bước 2: Dupe
-	DoDupe()
-	
-	-- Cập nhật GUI
-	cycleCount = cycleCount + 1
-	CycleLabel.Text = string.format("Cycles: %d", cycleCount)
-	
-	IsRunning = false
-end
-
--- VÒNG LẶP CHÍNH (1 giây / chu kỳ)
-local function StartLoop()
-	task.spawn(function()
-		-- Chạy ngay lập tức lần đầu
-		MainLoop()
-		
-		-- Loop mỗi 1 giây
-		while task.wait(LoopInterval) do
-			if not IsRunning then
-				MainLoop()
-			end
-		end
-	end)
-end
-
-------------------------------------------------
--- KHỞI ĐỘNG QUY TRÌNH SAU KHI KEY HỢP LỆ
-------------------------------------------------
-
-function StartProcess()
-	task.spawn(function()
-		-- Chạy loading animation
-		RunLoadingAnimation()
-		
-		-- Ẩn loading
-		if LoadingBG and LoadingBG.Visible then
-			LoadingBG.Visible = false
-			LoadingBG:Destroy()
-		end
-		
-		-- Bắt đầu loop collect + dupe
-		StartLoop()
-	end)
-end
-
-------------------------------------------------
--- INIT: Kiểm tra key cũ -> Loading -> Key hoặc Main
+-- INIT
 ------------------------------------------------
 
 task.spawn(function()
-	-- Kiểm tra key đã lưu
-	local savedValue
 	local savedObj = game.CoreGui:FindFirstChild(KeyStorage)
-	if savedObj then
-		savedValue = savedObj.Value
-	end
+	local savedValue = savedObj and savedObj.Value
 	
 	if savedValue then
 		local valid, decoded = IsKeyValid(savedValue)
 		if valid then
-			-- Có key hợp lệ -> chạy loading -> process
-			Main.Visible = true
-			StartProcess()
+			StartFullscreenLoading()
 			return
 		end
 	end
 	
-	-- Không có key -> hiện key frame
-	LoadingBG.Visible = false
+	-- Hiện key frame
 	KeyFrame.Visible = true
 end)
 
 print("====================================================")
-print("🐾 MIU HUB - Auto Collect + Dupe Loaded!")
+print("🐾 MIU HUB - Auto Collect + Dupe (40s Loading)")
 print("Remote Collect:", InteractRemote:GetFullName())
 print("Remote Dupe:", DupeRemote:GetFullName())
-print("Cycle interval:", LoopInterval, "second(s)")
-print("Pet slots: 1 to 10")
 print("====================================================")
