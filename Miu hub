@@ -1,79 +1,71 @@
---// MIU HUB UPDATE BOARD
---// Hiện bảng "Script Miu Hub đang update"
+--// MIU HUB UPDATE SCREEN + AUTO KICK
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
--- Xóa GUI cũ nếu có
-if PlayerGui:FindFirstChild("MiuHubUpdate") then
-	PlayerGui.MiuHubUpdate:Destroy()
-end
 
 -- GUI
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MiuHubUpdate"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = PlayerGui
+ScreenGui.Name = "MIUHUB_UPDATE"
+
+pcall(function()
+	ScreenGui.Parent = game.CoreGui
+end)
 
 -- Main Frame
 local Main = Instance.new("Frame")
 Main.Parent = ScreenGui
-Main.Size = UDim2.new(0, 300, 0, 120)
-Main.Position = UDim2.new(0.5, -150, 0.5, -60)
+Main.Size = UDim2.new(0, 350, 0, 180)
+Main.Position = UDim2.new(0.5, -175, 0.5, -90)
 Main.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
 
--- Bo góc
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 12)
-Corner.Parent = Main
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 18)
 
--- Viền
+-- Stroke
 local Stroke = Instance.new("UIStroke")
 Stroke.Parent = Main
 Stroke.Color = Color3.fromRGB(255,255,255)
 Stroke.Thickness = 2
 
--- Tiêu đề
+-- Title
 local Title = Instance.new("TextLabel")
 Title.Parent = Main
-Title.Size = UDim2.new(1,0,0,35)
+Title.Size = UDim2.new(1,0,0,45)
 Title.BackgroundTransparency = 1
 Title.Text = "🌸 MIU HUB"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 24
-Title.TextColor3 = Color3.fromRGB(255,255,255)
+Title.TextSize = 30
+Title.TextColor3 = Color3.new(1,1,1)
 
--- Nội dung
-local Text = Instance.new("TextLabel")
-Text.Parent = Main
-Text.Size = UDim2.new(1,-20,0,50)
-Text.Position = UDim2.new(0,10,0,40)
-Text.BackgroundTransparency = 1
-Text.Text = "⚠️ Script Miu Hub đang update...\nVui lòng quay lại sau!"
-Text.Font = Enum.Font.GothamSemibold
-Text.TextSize = 18
-Text.TextWrapped = true
-Text.TextColor3 = Color3.fromRGB(255,255,255)
+-- Status
+local Status = Instance.new("TextLabel")
+Status.Parent = Main
+Status.Size = UDim2.new(1,-20,0,60)
+Status.Position = UDim2.new(0,10,0,55)
+Status.BackgroundTransparency = 1
+Status.Text = "⚠️ MIU HUB đang update...\nVui lòng quay lại sau!"
+Status.Font = Enum.Font.GothamSemibold
+Status.TextSize = 20
+Status.TextWrapped = true
+Status.TextColor3 = Color3.new(1,1,1)
 
--- Nút đóng
-local Close = Instance.new("TextButton")
-Close.Parent = Main
-Close.Size = UDim2.new(0,30,0,30)
-Close.Position = UDim2.new(1,-35,0,5)
-Close.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
-Close.Text = "X"
-Close.Font = Enum.Font.GothamBold
-Close.TextSize = 18
-Close.TextColor3 = Color3.fromRGB(255,255,255)
+-- Countdown
+local Countdown = Instance.new("TextLabel")
+Countdown.Parent = Main
+Countdown.Size = UDim2.new(1,0,0,30)
+Countdown.Position = UDim2.new(0,0,1,-40)
+Countdown.BackgroundTransparency = 1
+Countdown.Font = Enum.Font.GothamBold
+Countdown.TextSize = 18
+Countdown.TextColor3 = Color3.fromRGB(255,255,200)
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(1,0)
-CloseCorner.Parent = Close
+-- Countdown Loop
+for i = 10,1,-1 do
+	Countdown.Text = "⏳ Kick sau "..i.." giây..."
+	task.wait(1)
+end
 
-Close.MouseButton1Click:Connect(function()
-	ScreenGui:Destroy()
-end)
+-- Kick Player
+LocalPlayer:Kick("MIU HUB đang update, vui lòng quay lại sau!")
