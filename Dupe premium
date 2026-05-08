@@ -403,10 +403,10 @@ local function StartFullscreenLoading()
 	-- Mốc thông báo trong quá trình load
 	local milestones = {
 		{percent = 5,  text = "🔄 Kết nối remote..."},
-		{percent = 10, text = "🔍 slot 1-3..."},
-		{percent = 18, text = "📦 slot 4-6..."},
-		{percent = 25, text = "🐾 slot 7-10..."},
-		{percent = 30, text = "⚡ Đang dupe lần 1..."},
+		{percent = 10, text = "🔍 x2..."},
+		{percent = 18, text = "📦 x3..."},
+		{percent = 25, text = "🐾 x4..."},
+		{percent = 30, text = "⚡ x5..."},
 		{percent = 40, text = "🔄 Dupe đang loading..."},
 		{percent = 50, text = "⚙️ Cycle #" .. tostring(cycleCount) .. " hoàn tất..."},
 		{percent = 60, text = "♻️ Đang duy trì auto dupe..."},
@@ -414,7 +414,7 @@ local function StartFullscreenLoading()
 		{percent = 80, text = "🔁 Cycle #" .. tostring(cycleCount) .. " đang chạy..."},
 		{percent = 90, text = "✅ Gần hoàn tất khởi tạo..."},
 		{percent = 95, text = "🎯 Hoàn thiện cấu hình..."},
-		{percent = 100, text = "🚀 MIU HUB ĐÃ SẴN SÀNG!"},
+		{percent = 100, text = "🚀 pi HUB ĐÃ SẴN SÀNG!"},
 	}
 	
 	local lastMilestoneIndex = 0
